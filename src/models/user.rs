@@ -6,6 +6,7 @@ use sqlx::prelude::FromRow;
 pub struct User {
     pub id: i64,
     pub username: String,
+    // #[serde(skip_serializing)]
     // pub created_at: DateTime<Utc>,
     // pub updated_at: DateTime<Utc>,
 }

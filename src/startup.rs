@@ -1,4 +1,4 @@
-use crate::{api, config::AppConfig};
+use crate::{api, config::AppConfig, services::app::AppState};
 use actix_web::{rt::signal, web, App, HttpServer};
 use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
@@ -14,7 +14,7 @@ pub async fn run(listener: TcpListener, config: AppConfig) -> std::io::Result<()
     // To run migrations: sqlx migrate run
 
     // Create app state
-    let app_state = web::Data::new(AppState { db: pool.clone() });
+    let app_state = web::Data::new(AppState::new(pool));
 
     // Start HTTP server
     let server = HttpServer::new(move || {
@@ -26,6 +26,7 @@ pub async fn run(listener: TcpListener, config: AppConfig) -> std::io::Result<()
     .run();
     println!("Server running at https://localhost:8080");
 
+    // Dev only
     tokio::select! {
         _ = server => {},
         _ = signal::ctrl_c() => {
@@ -34,9 +35,4 @@ pub async fn run(listener: TcpListener, config: AppConfig) -> std::io::Result<()
     };
 
     Ok(())
-}
-
-#[derive(Clone, Debug)]
-pub struct AppState {
-    pub db: sqlx::PgPool,
 }

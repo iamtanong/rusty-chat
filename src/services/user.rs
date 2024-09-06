@@ -1,19 +1,28 @@
-use actix_web::{web::Data, Error};
+use sqlx::PgPool;
 
 use crate::{
-    db::repositories::user as db,
+    db::repositories::user::UserRepository,
     models::user::{RegisterParams, RegisterResult},
-    startup::AppState,
+    utils::error::AppError,
 };
 
-pub async fn register(
-    app_state: &Data<AppState>,
-    params: RegisterParams,
-) -> Result<RegisterResult, Error> {
-    let register: RegisterResult =
-        db::create_user(&app_state.db, &params.username, &params.password)
-            .await
-            .unwrap();
+#[derive(Debug, Clone)]
+pub struct UserService {
+    user_repo: UserRepository,
+}
 
-    Ok(register)
+impl UserService {
+    pub fn new(db_pool: PgPool) -> Self {
+        let user_repo = UserRepository::new(db_pool);
+        Self { user_repo }
+    }
+
+    pub async fn create_user(&self, params: RegisterParams) -> Result<RegisterResult, AppError> {
+        let register = self
+            .user_repo
+            .create_user(&params.username, &params.password)
+            .await;
+
+        register
+    }
 }
